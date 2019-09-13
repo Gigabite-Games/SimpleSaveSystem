@@ -1,7 +1,10 @@
-﻿public enum SaveDataType
+﻿namespace SimpleSaveSystem
 {
-    Binary,
-    Json,
-    Xml,
-    Csv
+    public enum SaveDataType
+    {
+        Binary,
+        Json,
+        Xml,
+        Csv
+    }
 }
