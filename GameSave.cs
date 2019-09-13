@@ -108,8 +108,10 @@ namespace SimpleSaveSystem
             {
                 if (fireEvents)
                 {
-                    if (successful) OnLoadSuccessful?.Invoke();
-                    OnLoadFailed?.Invoke();
+                    if (successful)
+                        OnLoadSuccessful?.Invoke();
+                    else
+                        OnLoadFailed?.Invoke();
                 }
             }
 
