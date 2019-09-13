@@ -25,6 +25,7 @@ namespace SimpleSaveSystem
             SaveDataType dataType = SaveDataType.Json, bool fireEvents = true, bool throwExceptions = false)
         {
             var fullFilepath = BuildFullFilepath(filePath, name, extension);
+            var successful = false;
 
             try
             {
@@ -45,12 +46,21 @@ namespace SimpleSaveSystem
                         break;
                 }
 
-                if (fireEvents) OnSaveSuccessful?.Invoke();
+                successful = true;
             }
             catch
             {
-                if (fireEvents) OnSaveFailed?.Invoke();
                 if (throwExceptions) throw;
+            }
+            finally
+            {
+                if (fireEvents)
+                {
+                    if (successful)
+                        OnSaveSuccessful?.Invoke();
+                    else
+                        OnSaveFailed?.Invoke();
+                }
             }
         }
 
@@ -58,34 +68,49 @@ namespace SimpleSaveSystem
             SaveDataType dataType = SaveDataType.Json, bool fireEvents = true, bool throwExceptions = false)
         {
             var fullFilepath = BuildFullFilepath(filePath, name, extension);
+            var successful = false;
 
             try
             {
                 if (File.Exists(fullFilepath))
+                {
+                    T obj;
+
                     switch (dataType)
                     {
                         default:
                             throw new NotImplementedException(
                                 $"The selected SaveDataType '{dataType.ToString()}' is not implemented");
+
                         case SaveDataType.Json:
                             var json = File.ReadAllText(fullFilepath);
-                            var obj = JsonConvert.DeserializeObject<T>(json);
-                            if (fireEvents) OnLoadSuccessful?.Invoke();
-                            return obj;
+                            obj = JsonConvert.DeserializeObject<T>(json);
+                            break;
+
                         case SaveDataType.Binary:
                             var formatter = new BinaryFormatter();
                             var file = File.Open(fullFilepath, FileMode.Open);
                             file.Position = 0;
-                            var data = (T) formatter.Deserialize(file);
+                            obj = (T) formatter.Deserialize(file);
                             file.Close();
-                            if (fireEvents) OnLoadSuccessful?.Invoke();
-                            return data;
+                            break;
                     }
+
+                    successful = true;
+                    return obj;
+                }
             }
             catch
             {
-                if (fireEvents) OnLoadFailed?.Invoke();
                 if (throwExceptions) throw;
+            }
+            finally
+            {
+                if (fireEvents)
+                {
+                    if (successful) OnLoadSuccessful?.Invoke();
+                    OnLoadFailed?.Invoke();
+                }
             }
 
             return default;
